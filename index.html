@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',
+            'primary-dark': '#2563eb',
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
+  <div class="container mx-auto px-4 py-6 max-w-4xl">
+    <!-- Header -->
+    <header class="flex items-center justify-between mb-8">
+      <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Weather App</h1>
+      <div class="flex items-center gap-3">
+        <button 
+          id="geolocateBtn" 
+          class="p-2 rounded-lg bg-white dark:bg-gray-700 shadow-md hover:shadow-lg transition-shadow"
+          aria-label="Use current location"
+          title="Use current location">
+          <svg class="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+        </button>
+        <button 
+          id="themeToggle" 
+          class="p-2 rounded-lg bg-white dark:bg-gray-700 shadow-md hover:shadow-lg transition-shadow"
+          aria-label="Toggle theme">
+          <svg id="sunIcon" class="w-6 h-6 text-yellow-500 hidden dark:block" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+          </svg>
+          <svg id="moonIcon" class="w-6 h-6 text-gray-700 block dark:hidden" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Search Section -->
+    <div class="mb-8 relative">
+      <div class="relative">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Search for a capital city..."
+          class="w-full px-4 py-3 pl-12 rounded-lg shadow-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
+          autocomplete="off"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-controls="suggestions"
+          aria-expanded="false">
+        <svg class="w-5 h-5 text-gray-400 absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+      
+      <!-- Autocomplete Suggestions -->
+      <ul 
+        id="suggestions" 
+        class="absolute z-10 w-full mt-2 bg-white dark:bg-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden"
+        role="listbox">
+      </ul>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="hidden">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 animate-pulse">
+        <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"></div>
+        <div class="h-24 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div class="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div class="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+      <p class="text-red-800 dark:text-red-200" id="errorMessage"></p>
+    </div>
+
+    <!-- Weather Display -->
+    <div id="weatherDisplay" class="hidden">
+      <!-- Current Weather Card -->
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <div>
+            <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-1" id="cityName"></h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm" id="lastUpdated"></p>
+          </div>
+          <div class="flex items-center mt-4 md:mt-0">
+            <img id="weatherIcon" src="/placeholder.svg" alt="" class="w-24 h-24">
+            <div class="ml-4">
+              <div class="text-5xl font-bold text-gray-800 dark:text-white" id="temperature"></div>
+              <div class="text-gray-600 dark:text-gray-300 capitalize" id="description"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weather Details -->
+        <div class="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div class="text-center">
+            <p class="text-gray-500 dark:text-gray-400 text-sm mb-1">Feels Like</p>
+            <p class="text-xl font-semibold text-gray-800 dark:text-white" id="feelsLike"></p>
+          </div>
+          <div class="text-center">
+            <p class="text-gray-500 dark:text-gray-400 text-sm mb-1">Humidity</p>
+            <p class="text-xl font-semibold text-gray-800 dark:text-white" id="humidity"></p>
+          </div>
+          <div class="text-center">
+            <p class="text-gray-500 dark:text-gray-400 text-sm mb-1">Wind Speed</p>
+            <p class="text-xl font-semibold text-gray-800 dark:text-white" id="windSpeed"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3-Day Forecast -->
+      <div>
+        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4">3-Day Forecast</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="forecastContainer"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-gray-600 dark:text-gray-400 text-sm">
+      <p>Weather data provided by OpenWeatherMap</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
