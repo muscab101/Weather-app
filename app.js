@@ -3,7 +3,7 @@ const API_KEY = "dce5fd2b2e2b2df82e050e177833635a";
 const WEATHER_API_BASE = "https://api.openweathermap.org/data/2.5";
 
 // State
-let capitals = [];
+let capitals = []; // now contains all cities
 const weatherCache = new Map();
 let debounceTimer = null;
 let selectedIndex = -1;
@@ -20,19 +20,27 @@ const geolocateBtn = document.getElementById("geolocateBtn");
 
 // Initialize
 async function init() {
-  await loadCapitals();
+  await loadCities();
   initTheme();
   attachEventListeners();
   requestGeolocation();
 }
 
-// Load capitals data
-async function loadCapitals() {
+// Load cities data (all world cities)
+async function loadCities() {
   try {
-    const response = await fetch("capitals.json");
-    capitals = await response.json();
+    const response = await fetch("cities.json"); // place the full cities.json in your project
+    const data = await response.json();
+
+    // Map city data to expected structure
+    capitals = data.map(city => ({
+      name: city.name,
+      country: city.country,
+      lat: city.coord.lat,
+      lon: city.coord.lon,
+    }));
   } catch (error) {
-    console.error("[v0] Failed to load capitals:", error);
+    console.error("[v0] Failed to load cities:", error);
     showError("Failed to load city data. Please refresh the page.");
   }
 }
@@ -84,7 +92,7 @@ function handleSearchInput(event) {
   debounceTimer = setTimeout(() => {
     const matches = capitals
       .filter((capital) => capital.name.toLowerCase().startsWith(query.toLowerCase()))
-      .slice(0, 10);
+      .slice(0, 20); // limit to top 20 to avoid lag
 
     displaySuggestions(matches);
   }, 250);
@@ -177,7 +185,6 @@ async function fetchWeatherByCoords(lat, lon) {
   }
 
   try {
-    // Fetch by coordinates — still uses base endpoint
     const [currentResponse, forecastResponse] = await Promise.all([
       fetch(`${WEATHER_API_BASE}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`),
       fetch(`${WEATHER_API_BASE}/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`),
@@ -204,7 +211,6 @@ async function fetchWeatherByCoords(lat, lon) {
   }
 }
 
-// Updated to use your API URL structure
 async function fetchWeatherByCity(name) {
   searchInput.value = name;
   hideSuggestions();
@@ -292,7 +298,6 @@ function displayWeather(data) {
   const now = new Date();
   document.getElementById("lastUpdated").textContent = `Last updated: ${now.toLocaleTimeString()}`;
 
-  // Display forecast
   const forecastContainer = document.getElementById("forecastContainer");
   forecastContainer.innerHTML = forecast
     .map((day) => {
